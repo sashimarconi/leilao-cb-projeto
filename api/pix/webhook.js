@@ -1,6 +1,6 @@
 import { dbGetPayment, dbUpsertPayment, ensureTables } from '../_lib/db.js';
 import { sendCapiEvent } from '../_lib/capi.js';
-import { isPaid } from '../_lib/buckpay.js';
+import { isPaid } from '../_lib/nitro.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,8 +14,8 @@ export default async function handler(req, res) {
     const txData = body.data;
     if (!txData) return;
 
-    const txId = txData.id;
-    const status = String(txData.status || '').toLowerCase();
+    const txId = txData.id || txData.transaction_id;
+    const status = String(txData.status || (event === 'transaction.paid' ? 'paid' : '')).toLowerCase();
     if (!txId) return;
 
     await ensureTables();

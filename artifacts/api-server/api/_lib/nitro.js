@@ -1,4 +1,4 @@
-export const BUCKPAY_API_URL = 'https://api.realtechdev.com.br';
+export const NITRO_API_URL = 'https://api.nitropagamento.app';
 
 export function sanitizeBuyerName(name) {
   return (name || '').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\-']/g, '').trim().slice(0, 100) || 'Cliente';
@@ -9,12 +9,15 @@ export function buildExternalId() {
   return `lote-${Date.now()}-${rand}`;
 }
 
-export function getBuckPayHeaders() {
-  const token = process.env.PICATIC_API_KEY;
-  if (!token) throw new Error('BuckPay credentials missing (PICATIC_API_KEY)');
+export function getNitroHeaders() {
+  const publicKey = process.env.NITRO_PUBLIC_KEY;
+  const privateKey = process.env.NITRO_PRIVATE_KEY;
+  if (!publicKey || !privateKey) {
+    throw new Error('Nitro credentials missing (NITRO_PUBLIC_KEY/NITRO_PRIVATE_KEY)');
+  }
+  const token = Buffer.from(`${publicKey}:${privateKey}`).toString('base64');
   return {
-    'Authorization': `Bearer ${token}`,
-    'User-Agent': process.env.BUCKPAY_USER_AGENT || 'Mozilla/5.0 (compatible; LeilaoApp/1.0)',
+    Authorization: `Basic ${token}`,
     'Content-Type': 'application/json',
   };
 }
@@ -25,7 +28,7 @@ export function getWebhookBase() {
   return 'https://casasbahia-api-server5.vercel.app';
 }
 
-export const PAID_STATUSES = new Set(['paid', 'approved', 'captured', 'authorized', 'settled', 'complete', 'completed']);
+export const PAID_STATUSES = new Set(['paid', 'pago', 'approved', 'captured', 'authorized', 'settled', 'complete', 'completed']);
 
 export function isPaid(status) {
   return PAID_STATUSES.has(String(status || '').toLowerCase());

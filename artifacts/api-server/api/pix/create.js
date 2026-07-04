@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { dbUpsertPayment, ensureTables } from '../_lib/db.js';
-import { BUCKPAY_API_URL, sanitizeBuyerName, buildExternalId, getBuckPayHeaders, getWebhookBase } from '../_lib/buckpay.js';
+import { sanitizeBuyerName, buildExternalId, getNitroHeaders, getWebhookBase } from '../_lib/nitro.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -36,40 +36,44 @@ export default async function handler(req, res) {
 
     const webhookBase = getWebhookBase();
     const payload = {
-      external_id: externalId,
+      amount: Number(amountInReais.toFixed(2)),
       payment_method: 'pix',
-      amount: amountInCentavos,
-      buyer,
-      product: {
-        id: externalId,
-        name: `Comissão Leiloeiro — ${lotTitle || 'Lote Leilão #144'}`,
-      },
-      offer: {
-        id: externalId,
-        name: lotTitle || 'Lote Leilão #144',
-        quantity: 1,
+      description: `Pagamento PIX - ${lotTitle || 'Lote Leilão'}`,
+      items: [
+        {
+          title: lotTitle || `Lote Leilão #${externalId}`,
+          unitPrice: amountInCentavos,
+          quantity: 1,
+          tangible: false,
+        },
+      ],
+      customer: {
+        name: buyer.name,
+        email: buyer.email,
+        document: buyer.document,
+        phone: buyer.phone,
       },
       postbackUrl: `${webhookBase}/api/pix/webhook`,
+      metadata: {
+        order_id: externalId,
+      },
     };
 
-    const response = await axios.post(`${BUCKPAY_API_URL}/v1/transactions`, payload, {
-      headers: getBuckPayHeaders(),
+    const response = await axios.post('https://api.nitropagamento.app', payload, {
+      headers: getNitroHeaders(),
       timeout: 15000,
     });
 
-    // BuckPay pode retornar { data: { id, pix } } ou flat { id, pix }
     const resp = response.data;
-    const data = (resp && resp.data && resp.data.id) ? resp.data : resp;
-    if (!data || !data.id) {
+    if (!resp || resp.success !== true || !resp.data || !resp.data.id) {
       console.error('[pix/create] resposta inesperada:', JSON.stringify(resp));
-      return res.status(422).json({ error: (resp?.error?.message) || resp?.message || 'Resposta inválida da BuckPay' });
+      return res.status(422).json({ error: (resp?.message) || 'Resposta inválida da Nitro Pagamentos Hub' });
     }
 
+    const data = resp.data;
     const txId = data.id;
-    // Extrai código PIX — tenta todos os campos conhecidos da BuckPay
-    const pixObj = data.pix || data.pix_data || data.charge || {};
-    const pixCode = pixObj.code || pixObj.emv || pixObj.qr_code || pixObj.copia_e_cola || pixObj.copy_paste || null;
-    const qrcodeBase64 = pixObj.qrcode_base64 || pixObj.qr_code_base64 || pixObj.image_base64 || pixObj.base64 || null;
+    const pixCode = data.pix_code || null;
+    const qrcodeBase64 = data.pix_qr_code || null;
     console.log('[pix/create] tx:', txId, 'pixCode:', pixCode ? 'ok' : 'null');
 
     const customerIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || '';

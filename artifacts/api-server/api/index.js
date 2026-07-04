@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import { getPool, ensureTables, dbUpsertPayment, dbGetPayment } from './_lib/db.js';
-import { BUCKPAY_API_URL, sanitizeBuyerName, buildExternalId, getBuckPayHeaders, getWebhookBase, isPaid } from './_lib/buckpay.js';
+import { NITRO_API_URL, sanitizeBuyerName, buildExternalId, getNitroHeaders, getWebhookBase, isPaid } from './_lib/nitro.js';
 import { sendCapiEvent } from './_lib/capi.js';
 
 const app = express();
@@ -83,27 +83,43 @@ app.post('/api/pix/create', async (req, res) => {
 
     const webhookBase = getWebhookBase();
     const payload = {
-      external_id: externalId,
+      amount: Number(amountInReais.toFixed(2)),
       payment_method: 'pix',
-      amount: amountInCentavos,
-      buyer,
-      product: { id: externalId, name: gatewayProductName },
-      offer: { id: externalId, name: gatewayProductName, quantity: 1 },
+      description: `Pagamento PIX - ${gatewayProductName}`,
+      items: [
+        {
+          title: gatewayProductName,
+          unitPrice: amountInCentavos,
+          quantity: 1,
+          tangible: false,
+        },
+      ],
+      customer: {
+        name: buyer.name,
+        email: buyer.email,
+        document: buyer.document,
+        phone: buyer.phone,
+      },
       postbackUrl: `${webhookBase}/api/pix/webhook`,
+      metadata: {
+        order_id: externalId,
+      },
     };
 
-    const response = await axios.post(`${BUCKPAY_API_URL}/v1/transactions`, payload, {
-      headers: getBuckPayHeaders(), timeout: 15000,
+    const response = await axios.post(`${NITRO_API_URL}`, payload, {
+      headers: getNitroHeaders(), timeout: 15000,
     });
 
     const resp = response.data;
-    const data = (resp && resp.data && resp.data.id) ? resp.data : resp;
-    if (!data || !data.id) return res.status(422).json({ error: resp?.message || 'Resposta inválida da BuckPay' });
+    if (!resp || resp.success !== true || !resp.data || !resp.data.id) {
+      console.error('[pix/create] resposta inesperada:', JSON.stringify(resp));
+      return res.status(422).json({ error: resp?.message || 'Resposta inválida da Nitro Pagamentos Hub' });
+    }
 
+    const data = resp.data;
     const txId = data.id;
-    const pixObj = data.pix || data.pix_data || data.charge || {};
-    const pixCode = pixObj.code || pixObj.emv || pixObj.qr_code || pixObj.copia_e_cola || null;
-    const qrcodeBase64 = pixObj.qrcode_base64 || pixObj.qr_code_base64 || pixObj.image_base64 || null;
+    const pixCode = data.pix_code || null;
+    const qrcodeBase64 = data.pix_qr_code || null;
 
     const customerIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || '';
     await ensureTables();

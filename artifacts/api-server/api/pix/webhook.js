@@ -1,10 +1,11 @@
 import { dbGetPayment, dbUpsertPayment, ensureTables } from '../_lib/db.js';
 import { sendCapiEvent } from '../_lib/capi.js';
-import { isPaid } from '../_lib/buckpay.js';
+import { isPaid } from '../_lib/nitro.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   res.json({ ok: true });
 
@@ -14,15 +15,15 @@ export default async function handler(req, res) {
     const txData = body.data;
     if (!txData) return;
 
-    const txId = txData.id;
-    const status = String(txData.status || '').toLowerCase();
+    const txId = txData.id || txData.transaction_id;
     if (!txId) return;
+
+    const status = String(txData.status || (event === 'transaction.paid' ? 'paid' : '')).toLowerCase();
+    const paid = isPaid(status);
 
     await ensureTables();
     const existing = await dbGetPayment(txId) || {};
-    const paid = isPaid(status);
-    const valueInCentavos = txData.total_amount || 0;
-    const value = existing.value || valueInCentavos / 100;
+    const value = existing.value || Number(txData.amount || 0);
     const contentId = existing.contentId || 'Lote';
     const contentName = existing.contentName || contentId;
     const alreadyFired = existing.capiFired;

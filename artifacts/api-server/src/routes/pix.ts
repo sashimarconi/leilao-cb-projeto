@@ -1,43 +1,19 @@
 import { Router } from "express";
 import axios from "axios";
+import { NITRO_API_URL, sanitizeBuyerName, buildExternalId, getNitroHeaders, getWebhookBase, isPaid } from "../_lib/nitro.js";
 
 const router = Router();
 
-const BUCKPAY_API = "https://api.realtechdev.com.br";
 const FB_PIXELS = [
   { id: "1572682427123499", tokenEnv: "META_ACCESS_TOKEN" },
   { id: "1345659734286936", tokenEnv: "META_ACCESS_TOKEN_2" },
   { id: "2002239153696169", tokenEnv: "META_ACCESS_TOKEN_3" },
 ];
-const PAID_STATUSES = new Set(["paid", "approved", "captured", "authorized", "settled", "complete", "completed"]);
 
-// txId (BuckPay UUID) → { paid, status, value, contentId, contentName, customerIp, userAgent, capiFired }
+// txId (Nitro transaction id) → { paid, status, value, contentId, contentName, customerIp, userAgent, capiFired }
 const paymentStatusMap = new Map<string, Record<string, any>>();
 // external_id → txId (so we can look up by external_id on webhook)
 const externalIdMap = new Map<string, string>();
-
-function getBuckPayHeaders(): Record<string, string> {
-  const token = process.env.PICATIC_API_KEY;
-  if (!token) throw new Error("BuckPay credentials missing (PICATIC_API_KEY)");
-  return {
-    "Authorization": `Bearer ${token}`,
-    "User-Agent": process.env.BUCKPAY_USER_AGENT || "Mozilla/5.0 (compatible; LeilaoApp/1.0)",
-    "Content-Type": "application/json",
-  };
-}
-
-function isPaid(status: string, paidAt?: unknown): boolean {
-  return PAID_STATUSES.has(String(status).toLowerCase()) || !!paidAt;
-}
-
-function sanitizeName(name: string): string {
-  return name.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\-']/g, "").trim().slice(0, 100) || "Cliente";
-}
-
-function buildExternalId(): string {
-  const rand = Math.random().toString(36).slice(2, 8);
-  return `lote-${Date.now()}-${rand}`;
-}
 
 async function sendCapiEvent(params: {
   eventName: string;
@@ -101,7 +77,7 @@ router.post("/pix/create", async (req, res) => {
     const amountInCentavos = Math.round(amountInReais * 100);
     const externalId = buildExternalId();
     const safeEmail = email || `${cleanCpf}@arrematante.com.br`;
-    const safeName = sanitizeName(name);
+    const safeName = sanitizeBuyerName(name);
 
     const buyer: Record<string, string> = {
       name: safeName.length >= 3 ? safeName : `${safeName} Cliente`,
@@ -115,37 +91,45 @@ router.post("/pix/create", async (req, res) => {
       }
     }
 
-    const webhookBase = process.env.HEROKU_APP_URL || "https://casasbahia-cb823550c0e9.herokuapp.com";
+    const webhookBase = getWebhookBase();
     const payload = {
-      external_id: externalId,
+      amount: Number(amountInReais.toFixed(2)),
       payment_method: "pix",
-      amount: amountInCentavos,
-      buyer,
-      product: {
-        id: externalId,
-        name: `Comissão Leiloeiro — ${lotTitle || "Lote Leilão #144"}`,
-      },
-      offer: {
-        id: externalId,
-        name: lotTitle || "Lote Leilão #144",
-        quantity: 1,
+      description: `Pagamento PIX - ${lotTitle || "Lote Leilão"}`,
+      items: [
+        {
+          title: lotTitle || `Lote Leilão #${externalId}`,
+          unitPrice: amountInCentavos,
+          quantity: 1,
+          tangible: false,
+        },
+      ],
+      customer: {
+        name: buyer.name,
+        email: buyer.email,
+        document: buyer.document,
+        phone: buyer.phone,
       },
       postbackUrl: `${webhookBase}/api/pix/webhook`,
+      metadata: {
+        order_id: externalId,
+      },
     };
 
     console.log(`[create] external_id=${externalId} amount=${amountInCentavos}c (R$${amountInReais})`);
 
-    const response = await axios.post(`${BUCKPAY_API}/v1/transactions`, payload, {
-      headers: getBuckPayHeaders(),
+    const response = await axios.post(NITRO_API_URL, payload, {
+      headers: getNitroHeaders(),
       timeout: 15000,
     });
 
-    const data = response.data?.data as any;
-
-    if (!data || !data.id) {
-      res.status(422).json({ error: response.data?.error?.message || "Resposta inválida da BuckPay" });
+    const resp = response.data as any;
+    if (!resp || resp.success !== true || !resp.data || !resp.data.id) {
+      res.status(422).json({ error: resp?.message || "Resposta inválida da Nitro Pagamentos Hub" });
       return;
     }
+
+    const data = resp.data as any;
 
     const txId = data.id;
     externalIdMap.set(externalId, txId);
@@ -163,18 +147,17 @@ router.post("/pix/create", async (req, res) => {
       id: txId,
       externalId,
       status: data.status,
-      pixCode: data.pix?.code ?? null,
-      qrcodeBase64: data.pix?.qrcode_base64 ?? null,
+      pixCode: data.pix_code ?? null,
+      qrcodeBase64: data.pix_qr_code ?? null,
     });
   } catch (err: any) {
     const errData = err?.response?.data;
-    const baseMsg = errData?.error?.message || errData?.error || err.message || "Erro ao criar transação";
-    // Extrai detalhes de validação da BuckPay (ex: CPF inválido)
+    const baseMsg = errData?.message || errData?.error?.message || errData?.error || err.message || "Erro ao criar transação";
     const detail = errData?.error?.detail
       ? Object.values(errData.error.detail as Record<string, string[]>).flat().join(", ")
       : null;
     const msg = detail ? `${baseMsg}: ${detail}` : baseMsg;
-    console.error("[create] erro BuckPay:", JSON.stringify(errData || err.message, null, 2));
+    console.error("[create] erro Nitro:", JSON.stringify(errData || err.message, null, 2));
     res.status(500).json({ error: msg });
   }
 });
@@ -225,7 +208,7 @@ router.post("/pix/confirm", async (req, res) => {
   }
 });
 
-// ─── Webhook BuckPay → CAPI ──────────────────────────────────────────────────
+// ─── Webhook Nitro → CAPI ──────────────────────────────────────────────────
 
 router.post("/pix/webhook", async (req, res) => {
   res.json({ ok: true });
@@ -236,8 +219,8 @@ router.post("/pix/webhook", async (req, res) => {
 
     if (!txData) return;
 
-    const txId = txData.id;
-    const status = String(txData.status || "").toLowerCase();
+    const txId = txData.id || txData.transaction_id;
+    const status = String(txData.status || (event === 'transaction.paid' ? 'paid' : '')).toLowerCase();
 
     if (!txId) return;
 
