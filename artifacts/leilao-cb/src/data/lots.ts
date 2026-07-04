@@ -45,7 +45,7 @@ export interface Lot {
       "url": "https://tudoleilao.com.br/item/1001/detalhes",
       "price": "R$240,00",
       "status": "Disponível",
-      "image": "/iphone13pro-gold.jpg",
+      "image": "https://macmagazine.com.br/wp-content/uploads/2023/03/30-iphone-13-pro-max-leilao-receita.jpg",
       "buyer": null,
       "cpf": null,
       "conditionNote": "Produto <strong>novo, sem uso e lacrado de fábrica</strong>. A avaria é exclusivamente estética: <strong>amassado na caixa</strong>. O aparelho está completamente intacto e o lacre original da Apple permanece intacto. <strong>Não é possível realizar trocas ou devoluções.</strong>"
@@ -94,7 +94,7 @@ export interface Lot {
       "url": "https://tudoleilao.com.br/item/1002/detalhes",
       "price": "R$195,00",
       "status": "Disponível",
-      "image": "/mondial-airfryer-4l.jpg",
+      "image": "https://www.mgl.com.br/imagens/1300x1300/3646af73-3aa3-46a3-ba3b-85d23281e73b.jpg",
       "buyer": null,
       "cpf": null,
       "conditionNote": "Este lote contém <strong>2 (duas) unidades</strong>. Produtos <strong>novos e sem uso</strong>, com avaria exclusivamente estética: <strong>embalagem amassada</strong>. Os aparelhos estão completamente intactos e funcionais. <strong>Não é possível realizar trocas ou devoluções.</strong>"
