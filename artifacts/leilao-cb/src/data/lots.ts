@@ -94,7 +94,7 @@ export interface Lot {
       "url": "https://tudoleilao.com.br/item/1002/detalhes",
       "price": "R$195,00",
       "status": "Disponível",
-      "image": "https://www.mgl.com.br/imagens/1300x1300/3646af73-3aa3-46a3-ba3b-85d23281e73b.jpg",
+      "image": "https://d1y4blh5egbvru.cloudfront.net/img/leiloes/4613/lotes/330437/00.jpg",
       "buyer": null,
       "cpf": null,
       "conditionNote": "Este lote contém <strong>2 (duas) unidades</strong>. Produtos <strong>novos e sem uso</strong>, com avaria exclusivamente estética: <strong>embalagem amassada</strong>. Os aparelhos estão completamente intactos e funcionais. <strong>Não é possível realizar trocas ou devoluções.</strong>"
