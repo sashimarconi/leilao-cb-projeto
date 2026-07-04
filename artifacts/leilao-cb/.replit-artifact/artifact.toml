@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Leilão Linha Branca - Casas Bahia"
+version = "1.0.0"
+id = "artifacts/leilao-cb"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20459
+
+[services.development]
+run = "pnpm --filter @workspace/leilao-cb run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/leilao-cb", "run", "build" ]
+publicDir = "artifacts/leilao-cb/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20459"
+BASE_PATH = "/"

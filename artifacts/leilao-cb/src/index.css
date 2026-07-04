@@ -1,0 +1,115 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@font-face {
+  font-family: 'SiteFonte';
+  src: url('/fonts/auction.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Nunito', sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  --cb-yellow: #FFCC00;
+  --cb-blue: #003087;
+  --cb-blue-mid: #0047C0;
+  --cb-text: #1a1a2e;
+  --cb-gray-bg: #f5f5f5;
+  --cb-gray-border: #e8e8e8;
+  --radius: 0.5rem;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'SiteFonte', 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--cb-gray-bg);
+  color: var(--cb-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Product card hover effect */
+.product-card {
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.product-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+}
+
+/* Button base */
+.btn-yellow {
+  background-color: var(--cb-yellow);
+  color: #1a1a2e;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-yellow:hover {
+  background-color: #f5c200;
+  border-color: #e6b800;
+}
+
+.btn-outline-blue {
+  background-color: transparent;
+  color: var(--cb-blue);
+  font-weight: 700;
+  border-radius: 6px;
+  border: 2px solid var(--cb-blue);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-outline-blue:hover {
+  background-color: var(--cb-blue);
+  color: white;
+}
+
+/* Badge styles */
+.badge-vendido {
+  background-color: #e6f9ef;
+  color: #1a7a45;
+  border: 1px solid #b8e8cf;
+}
+
+.badge-nao-vendido {
+  background-color: #fef2f2;
+  color: #c0392b;
+  border: 1px solid #fcd5d5;
+}
+
+/* Gallery thumb buttons */
+.gallery-thumb {
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.gallery-thumb.active,
+.gallery-thumb:hover {
+  border-color: var(--cb-yellow);
+}
+
+/* Scrollbar hidden for horizontal scroll */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

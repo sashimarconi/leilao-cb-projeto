@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ativando Pixel TikTok...</title>
+  <style>
+    body { font-family: sans-serif; background: #000; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    h2 { margin-bottom: 24px; }
+    #log { background: #111; border: 1px solid #333; border-radius: 8px; padding: 20px; width: 360px; max-width: 90vw; font-size: 13px; line-height: 2; }
+    .ok { color: #4caf50; }
+    .wait { color: #ff9800; }
+  </style>
+</head>
+<body>
+  <h2>Ativando Pixel TikTok <code>D7C4S1RC77UF9EAJT4V0</code></h2>
+  <div id="log"><span class="wait">Carregando pixel...</span></div>
+
+  <!-- TikTok Pixel -->
+  <script>
+  !function (w, d, t) {
+    w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
+    var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
+    ;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+    ttq.load('D7C4S1RC77UF9EAJT4V0');
+    ttq.page();
+  }(window, document, 'ttq');
+  </script>
+
+  <script>
+    var log = document.getElementById('log');
+    var events = [
+      "ViewContent",
+      "ClickButton",
+      "Search",
+      "AddToWishlist",
+      "AddToCart",
+      "InitiateCheckout",
+      "AddPaymentInfo",
+      "CompletePayment",
+      "PlaceAnOrder",
+      "Contact",
+      "Download",
+      "SubmitForm",
+      "CompleteRegistration",
+      "Subscribe"
+    ];
+
+    function addLine(text, cls) {
+      var line = document.createElement('div');
+      line.className = cls || '';
+      line.textContent = text;
+      log.appendChild(line);
+    }
+
+    function fireEvents() {
+      log.innerHTML = '';
+      addLine('Pixel carregado. Disparando eventos...', 'wait');
+
+      events.forEach(function(evt, i) {
+        setTimeout(function() {
+          try {
+            window.ttq.track(evt, { value: 0, currency: 'BRL' });
+            addLine('✓ ' + evt, 'ok');
+          } catch(e) {
+            addLine('✗ ' + evt + ' — ' + e.message);
+          }
+          if (i === events.length - 1) {
+            setTimeout(function() {
+              addLine('');
+              addLine('✅ Todos os eventos enviados!', 'ok');
+              addLine('Pode fechar esta página.', 'wait');
+            }, 300);
+          }
+        }, i * 400);
+      });
+    }
+
+    // Aguarda o pixel carregar antes de disparar
+    var waited = 0;
+    var check = setInterval(function() {
+      waited += 200;
+      if (typeof window.ttq !== 'undefined' && typeof window.ttq.track === 'function') {
+        clearInterval(check);
+        fireEvents();
+      } else if (waited >= 8000) {
+        clearInterval(check);
+        log.innerHTML = '<span style="color:#f44">Pixel não carregou. Verifique sua conexão e tente novamente.</span>';
+      }
+    }, 200);
+  </script>
+</body>
+</html>

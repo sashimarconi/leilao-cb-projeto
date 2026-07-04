@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title id="pg-title"></title>
+  <style>
+    a { color: var(--link-color); }
+    body {
+      --background-color: #fff;
+      --error-code-color: var(--google-gray-700);
+      --google-blue-600: rgb(26,115,232);
+      --google-blue-700: rgb(25,103,210);
+      --google-gray-50: rgb(248,249,250);
+      --google-gray-100: rgb(241,243,244);
+      --google-gray-300: rgb(218,220,224);
+      --google-gray-500: rgb(154,160,166);
+      --google-gray-600: rgb(128,134,139);
+      --google-gray-700: rgb(95,99,104);
+      --google-gray-800: rgb(60,64,67);
+      --google-gray-900: rgb(32,33,36);
+      --heading-color: var(--google-gray-900);
+      --link-color: rgb(88,88,88);
+      --primary-button-fill-color: var(--google-blue-600);
+      --primary-button-fill-color-active: var(--google-blue-700);
+      --primary-button-text-color: #fff;
+      --secondary-button-border-color: var(--google-gray-500);
+      --secondary-button-fill-color: #fff;
+      --secondary-button-hover-fill-color: var(--google-gray-50);
+      --secondary-button-text-color: var(--google-gray-700);
+      --small-link-color: var(--google-gray-700);
+      --text-color: var(--google-gray-700);
+      background: var(--background-color);
+      color: var(--text-color);
+      word-wrap: break-word;
+      font-family: system-ui, sans-serif;
+      font-size: 75%;
+      margin: 0;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        --background-color: var(--google-gray-900);
+        --error-code-color: var(--google-gray-500);
+        --heading-color: var(--google-gray-500);
+        --link-color: rgb(138,180,248);
+        --primary-button-fill-color: rgb(138,180,248);
+        --primary-button-text-color: var(--google-gray-900);
+        --secondary-button-fill-color: var(--google-gray-900);
+        --secondary-button-text-color: rgb(138,180,248);
+        --small-link-color: rgb(138,180,248);
+        --text-color: var(--google-gray-500);
+      }
+      .icon { filter: invert(1); }
+    }
+    html { -webkit-text-size-adjust: 100%; font-size: 125%; }
+    button {
+      border: 0;
+      border-radius: 20px;
+      box-sizing: border-box;
+      color: var(--primary-button-text-color);
+      cursor: pointer;
+      float: right;
+      font-size: .875em;
+      margin: 0;
+      padding: 8px 16px;
+      background: var(--primary-button-fill-color);
+      transition: box-shadow 150ms cubic-bezier(0.4,0,0.2,1);
+      user-select: none;
+    }
+    button:active { background: var(--primary-button-fill-color-active); outline: 0; }
+    h1 {
+      color: var(--heading-color);
+      font-size: 1.6em;
+      font-weight: normal;
+      line-height: 1.25em;
+      margin-bottom: 16px;
+      margin-top: 0;
+    }
+    h1 span { font-weight: 500; }
+    .icon {
+      height: 72px;
+      width: 72px;
+      margin: 0 0 40px;
+      background-repeat: no-repeat;
+      background-size: 100%;
+      display: inline-block;
+      -webkit-user-select: none;
+    }
+    .icon-generic {
+      content: image-set(
+        url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABIAQMAAABvIyEEAAAABlBMVEUAAABTU1OoaSf/AAAAAXRSTlMAQObYZgAAAENJREFUeF7tzbEJACEQRNGBLeAasBCza2lLEGx0CxFGG9hBMDDxRy/72O9FMnIFapGylsu1fgoBdkXfUHLrQgdfrlJN1BdYBjQQm3UAAAAASUVORK5CYII=) 1x,
+        url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAACQAQMAAADdiHD7AAAABlBMVEUAAABTU1OoaSf/AAAAAXRSTlMAQObYZgAAAFJJREFUeF7t0cENgDAMQ9FwYgxG6WjpaIzCCAxQxVggFuDiCvlLOeRdHR9yzjncHVoq3npu+wQUrUuJHylSTmBaespJyJQoObUeyxDQb3bEm5Au81c0pSCD8HYAAAAASUVORK5CYII=) 2x);
+      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAACQAQMAAADdiHD7AAAABlBMVEUAAABTU1OoaSf/AAAAAXRSTlMAQObYZgAAAFJJREFUeF7t0cENgDAMQ9FwYgxG6WjpaIzCCAxQxVggFuDiCvlLOeRdHR9yzjncHVoq3npu+wQUrUuJHylSTmBaespJyJQoObUeyxDQb3bEm5Au81c0pSCD8HYAAAAASUVORK5CYII=);
+    }
+    .interstitial-wrapper {
+      box-sizing: border-box;
+      font-size: 1em;
+      line-height: 1.6em;
+      margin: 14vh auto 0;
+      max-width: 600px;
+      width: 100%;
+    }
+    .error-code {
+      color: var(--error-code-color);
+      font-size: .8em;
+      margin-top: 12px;
+      text-transform: uppercase;
+    }
+    .nav-wrapper {
+      margin-top: 51px;
+    }
+    .nav-wrapper::after {
+      clear: both;
+      content: '';
+      display: table;
+      width: 100%;
+    }
+    #buttons::after {
+      clear: both;
+      content: '';
+      display: block;
+      width: 100%;
+    }
+    .suggested-right > #control-buttons { float: right; }
+    .suggested-right > #details-button { float: left; }
+    @media (max-width: 700px) {
+      .interstitial-wrapper { padding: 0 10%; }
+    }
+    @media (max-width: 420px) {
+      button, .small-link { float: none; font-size: .825em; font-weight: 500; margin: 0; width: 100%; }
+      button { padding: 16px 24px; }
+      .nav-wrapper { margin-top: 30px; }
+    }
+    #sub-frame-error { display: none; }
+  </style>
+  <script>
+    (function() {
+      var host = window.location.hostname || document.referrer || 'este site';
+      document.title = host;
+      document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('hostname');
+        if (el) el.textContent = host;
+        var btn = document.getElementById('reload-button');
+        if (btn) btn.setAttribute('data-url', window.location.href);
+      });
+    })();
+  </script>
+</head>
+<body class="neterror">
+  <div id="content">
+    <div id="main-frame-error" class="interstitial-wrapper">
+      <div id="main-content">
+        <div class="icon icon-generic"></div>
+        <div id="main-message">
+          <h1><span>Não é possível acessar esse site</span></h1>
+          <p>Verifique se há um erro de digitação em <b id="hostname"></b>.</p>
+          <div class="error-code">DNS_PROBE_FINISHED_NXDOMAIN</div>
+        </div>
+      </div>
+      <div id="buttons" class="nav-wrapper suggested-right">
+        <div id="control-buttons">
+          <button id="reload-button" onclick="window.location.reload()">
+            Recarregar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

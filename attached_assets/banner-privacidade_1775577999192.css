@@ -1,0 +1,69 @@
+.cc-window .cc-btn.cc-dismiss {
+  display: none;
+}
+.cc-window .cc-btn.cc-allow {
+  line-height: 28px;
+  font-size: 15px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.cc-window .cc-link.cmp-pref-link {
+  font-size: 14px;
+  line-height: 28px;
+}
+
+
+/* Tema  home 2026 */
+
+/*
+ body {
+  background: #0033C6 !important;
+  background-size: cover !important;
+}
+
+body[id*="_home"] {
+  background: none !important;
+}
+
+*/
+
+
+/* mantém por segurança caso algum override mobile exista */
+
+ /* 
+
+@media (max-width: 767px) {
+  body {
+    background: #0033C6 !important;
+  }
+}
+
+.css-q8j7ss .slick-slide img {
+  border: 1px solid #fff !important;
+  border-radius: 12px;
+} 
+
+*/
+
+
+/* agrupa títulos com a mesma regra */
+
+/*
+h2.dsvia-heading.css-qdl7np,
+h2.dsvia-heading.css-9w0qkn,
+h2.dsvia-heading.css-1hddhnr,
+p.dsvia-text.css-1i6e69t,
+section.lp---mosaico-insider-ofertas .container-content h2 {
+  color: #fff;
+}
+
+p.dsvia-text.css-2otbsu {
+  color: #fff;
+}
+
+*/
+
+
+
+
+

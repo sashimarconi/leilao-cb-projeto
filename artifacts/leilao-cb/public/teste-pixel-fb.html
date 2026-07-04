@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teste Pixel Meta — Funil Completo</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+    h2{font-size:18px;margin-bottom:6px;text-align:center}
+    p.sub{font-size:12px;color:#888;margin-bottom:28px;text-align:center}
+    #log{background:#111;border:1px solid #222;border-radius:10px;padding:20px;width:100%;max-width:440px;font-size:13px;line-height:2.2}
+    .step{display:flex;align-items:center;gap:10px;border-bottom:1px solid #1a1a1a;padding-bottom:6px;margin-bottom:6px}
+    .step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+    .label{flex:1;color:#ccc}
+    .badge{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:700}
+    .wait{background:#333;color:#888}
+    .ok{background:#14532d;color:#4ade80}
+    .err{background:#450a0a;color:#f87171}
+    #result{margin-top:20px;font-size:12px;text-align:center;color:#888;max-width:440px}
+    #result.done{color:#4ade80;font-weight:700;font-size:14px}
+  </style>
+  <!-- Meta Pixel -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1572682427123499');
+  </script>
+</head>
+<body>
+
+<h2>Simulação do Funil — Meta Pixel</h2>
+<p class="sub">Pixel: <code>1572682427123499</code> &nbsp;|&nbsp; Verifique os eventos em <strong>Gerenciador → Pixels → Testar Eventos</strong></p>
+
+<div id="log">
+  <div class="step" id="s-pageview">
+    <span class="icon">📄</span>
+    <span class="label">PageView</span>
+    <span class="badge wait" id="b-pageview">aguardando</span>
+  </div>
+  <div class="step" id="s-viewcontent">
+    <span class="icon">👁️</span>
+    <span class="label">ViewContent</span>
+    <span class="badge wait" id="b-viewcontent">aguardando</span>
+  </div>
+  <div class="step" id="s-initiatecheckout">
+    <span class="icon">🛒</span>
+    <span class="label">InitiateCheckout</span>
+    <span class="badge wait" id="b-initiatecheckout">aguardando</span>
+  </div>
+  <div class="step" id="s-addpaymentinfo">
+    <span class="icon">💳</span>
+    <span class="label">AddPaymentInfo</span>
+    <span class="badge wait" id="b-addpaymentinfo">aguardando</span>
+  </div>
+  <div class="step" id="s-purchase">
+    <span class="icon">✅</span>
+    <span class="label">Purchase — R$ 499,90</span>
+    <span class="badge wait" id="b-purchase">aguardando</span>
+  </div>
+</div>
+
+<div id="result">Iniciando simulação...</div>
+
+<script>
+  function mark(id, status) {
+    var b = document.getElementById('b-' + id);
+    if (!b) return;
+    b.textContent = status === 'ok' ? 'enviado ✓' : 'erro ✗';
+    b.className = 'badge ' + status;
+  }
+
+  function fire(eventName, params, id) {
+    try {
+      if (typeof window.fbq !== 'function') throw new Error('fbq não carregado');
+      window.fbq('track', eventName, params || {});
+      mark(id, 'ok');
+      return true;
+    } catch(e) {
+      mark(id, 'err');
+      return false;
+    }
+  }
+
+  var PIXEL_ID = '1572682427123499';
+  var PRODUCT_ID = 'lote-simulacao-001';
+  var VALUE = 499.90;
+  var CURRENCY = 'BRL';
+
+  var steps = [
+    { delay: 300,  fn: function() { fire('PageView', {}, 'pageview'); } },
+    { delay: 1200, fn: function() {
+        fire('ViewContent', {
+          value: VALUE,
+          currency: CURRENCY,
+          content_ids: [PRODUCT_ID],
+          content_type: 'product',
+          content_name: 'Lote Leilão — Simulação',
+        }, 'viewcontent');
+    }},
+    { delay: 2400, fn: function() {
+        fire('InitiateCheckout', {
+          value: VALUE,
+          currency: CURRENCY,
+          content_ids: [PRODUCT_ID],
+          content_type: 'product',
+          num_items: 1,
+        }, 'initiatecheckout');
+    }},
+    { delay: 3600, fn: function() {
+        fire('AddPaymentInfo', {
+          value: VALUE,
+          currency: CURRENCY,
+          content_ids: [PRODUCT_ID],
+          content_type: 'product',
+        }, 'addpaymentinfo');
+    }},
+    { delay: 4800, fn: function() {
+        var ok = fire('Purchase', {
+          value: VALUE,
+          currency: CURRENCY,
+          content_ids: [PRODUCT_ID],
+          content_type: 'product',
+          num_items: 1,
+        }, 'purchase');
+        setTimeout(function() {
+          var r = document.getElementById('result');
+          if (ok) {
+            r.textContent = '✅ Todos os eventos enviados! Confira agora em: Gerenciador de Anúncios → Pixel → Testar Eventos';
+            r.className = 'done';
+          } else {
+            r.textContent = '⚠️ Algum evento falhou. Verifique se o pixel carregou e tente novamente.';
+          }
+        }, 500);
+    }},
+  ];
+
+  // Aguarda fbq carregar antes de disparar
+  var waited = 0;
+  var check = setInterval(function() {
+    waited += 100;
+    if (typeof window.fbq === 'function') {
+      clearInterval(check);
+      document.getElementById('result').textContent = 'Pixel carregado. Disparando funil completo...';
+      steps.forEach(function(s) { setTimeout(s.fn, s.delay); });
+    } else if (waited >= 8000) {
+      clearInterval(check);
+      document.getElementById('result').textContent = '⚠️ Pixel não carregou. Verifique sua conexão com a internet.';
+    }
+  }, 100);
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Voisao7nEv-TjmT5VAU8D"
+uri = "file://leilao-cb-projeto.tar.gz"
+type = "unspecified"
+title = "Projeto Leilão CB — completo"
