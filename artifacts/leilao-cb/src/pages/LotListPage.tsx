@@ -29,10 +29,10 @@ export default function LotListPage() {
   const [sortBy, setSortBy] = useState<"padrao" | "lote" | "price-asc" | "price-desc">("padrao");
 
   useEffect(() => {
-    if (document.getElementById("vturb-script-69f23cf80478b93f20529981")) return;
+    if (document.getElementById("vturb-script-6a4585a8b01b3541c4553e7e")) return;
     const s = document.createElement("script");
-    s.id = "vturb-script-69f23cf80478b93f20529981";
-    s.src = "https://scripts.converteai.net/fcf04a9f-29fd-46fe-9da3-d194f2a924af/players/69f23cf80478b93f20529981/v4/player.js";
+    s.id = "vturb-script-6a4585a8b01b3541c4553e7e";
+    s.src = "https://scripts.converteai.net/03bc6dfe-37d2-4f75-84ff-f2483ee43db1/players/6a4585a8b01b3541c4553e7e/v4/player.js";
     s.async = true;
     document.head.appendChild(s);
   }, []);
@@ -92,7 +92,7 @@ export default function LotListPage() {
           </h1>
           {/* Full-width video */}
           <div style={{ display: "block", margin: "12px auto 16px", width: "100%" }}>
-            <vturb-smartplayer id="vid-69f23cf80478b93f20529981" style={{ display: "block", margin: "0 auto", width: "100%" }} />
+            <vturb-smartplayer id="vid-6a4585a8b01b3541c4553e7e" style={{ display: "block", margin: "0 auto", width: "100%" }} />
           </div>
           {/* Description */}
           <p style={{ fontSize: 15, opacity: 0.9, fontWeight: 500, lineHeight: 1.45 }}>
