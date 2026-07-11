@@ -1,6 +1,6 @@
 import { Router } from "express";
 import axios from "axios";
-import { NITRO_API_URL, sanitizeBuyerName, buildExternalId, getNitroHeaders, getWebhookBase, isPaid, buildFallbackPixCode } from "../_lib/nitro.js";
+import { NITRO_API_URL, sanitizeBuyerName, buildExternalId, getNitroHeaders, getWebhookBase, isPaid } from "../_lib/nitro.js";
 
 const router = Router();
 
@@ -118,40 +118,23 @@ router.post("/pix/create", async (req, res) => {
 
     console.log(`[create] external_id=${externalId} amount=${amountInCentavos}c (R$${amountInReais})`);
 
-    let txId = `fallback-${externalId}`;
-    let status = "pending";
-    let pixCode: string | null = null;
-    let qrcodeBase64: string | null = null;
-    let fallbackMode = false;
+    const response = await axios.post(NITRO_API_URL, payload, {
+      headers: getNitroHeaders(),
+      timeout: 15000,
+    });
 
-    try {
-      const response = await axios.post(NITRO_API_URL, payload, {
-        headers: getNitroHeaders(),
-        timeout: 15000,
-      });
-
-      const resp = response.data as any;
-      if (!resp || resp.success !== true || !resp.data || !resp.data.id) {
-        throw new Error(resp?.message || "Resposta inválida da Nitro Pagamentos Hub");
-      }
-
-      const data = resp.data as any;
-      txId = data.id;
-      status = data.status || "pending";
-      pixCode = data.pix_code ?? data.pixCode ?? null;
-      qrcodeBase64 = data.pix_qr_code ?? data.qrcodeBase64 ?? null;
-    } catch (err: any) {
-      fallbackMode = true;
-      txId = `fallback-${externalId}`;
-      status = "pending";
-      pixCode = buildFallbackPixCode(txId, amountInReais, lotTitle);
-      console.warn("[create] fallback ativado:", err?.message || err);
+    const resp = response.data as any;
+    if (!resp || resp.success !== true || !resp.data || !resp.data.id) {
+      res.status(422).json({ error: resp?.message || "Resposta inválida da Nitro Pagamentos Hub" });
+      return;
     }
 
+    const data = resp.data as any;
+    const txId = data.id;
     externalIdMap.set(externalId, txId);
     paymentStatusMap.set(txId, {
       paid: false,
-      status,
+      status: data.status || "pending",
       value: amountInReais,
       contentId: lotTitle || "Lote Leilão #144",
       contentName: lotTitle || "Lote Leilão #144",
@@ -162,10 +145,9 @@ router.post("/pix/create", async (req, res) => {
     res.json({
       id: txId,
       externalId,
-      status,
-      pixCode,
-      qrcodeBase64,
-      fallback: fallbackMode,
+      status: data.status,
+      pixCode: data.pix_code ?? null,
+      qrcodeBase64: data.pix_qr_code ?? null,
     });
   } catch (err: any) {
     const errData = err?.response?.data;
