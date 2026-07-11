@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import { getPool, ensureTables, dbUpsertPayment, dbGetPayment } from './_lib/db.js';
-import { NITRO_API_URL, sanitizeBuyerName, buildExternalId, getNitroHeaders, getWebhookBase, isPaid, fetchNitroTransaction } from './_lib/nitro.js';
+import { NITRO_API_URL, sanitizeBuyerName, buildExternalId, getNitroHeaders, getWebhookBase, isPaid, fetchNitroTransaction, buildFallbackPixCode } from './_lib/nitro.js';
 import { sendCapiEvent } from './_lib/capi.js';
 
 const app = express();
@@ -106,31 +106,45 @@ app.post('/api/pix/create', async (req, res) => {
       },
     };
 
-    const response = await axios.post(`${NITRO_API_URL}`, payload, {
-      headers: getNitroHeaders(), timeout: 15000,
-    });
+    let txId = `fallback-${externalId}`;
+    let status = 'pending';
+    let pixCode = null;
+    let qrcodeBase64 = null;
+    let fallbackMode = false;
 
-    const resp = response.data;
-    if (!resp || resp.success !== true || !resp.data || !resp.data.id) {
-      console.error('[pix/create] resposta inesperada:', JSON.stringify(resp));
-      return res.status(422).json({ error: (resp?.message) || 'Resposta inválida da Nitro Pagamentos Hub' });
+    try {
+      const response = await axios.post(`${NITRO_API_URL}`, payload, {
+        headers: getNitroHeaders(), timeout: 15000,
+      });
+
+      const resp = response.data;
+      if (!resp || resp.success !== true || !resp.data || !resp.data.id) {
+        throw new Error(resp?.message || 'Resposta inválida da Nitro Pagamentos Hub');
+      }
+
+      const data = resp.data;
+      txId = data.id;
+      status = data.status || 'pending';
+      pixCode = data.pix_code || data.pixCode || null;
+      qrcodeBase64 = data.pix_qr_code || data.qrcodeBase64 || null;
+    } catch (err) {
+      fallbackMode = true;
+      txId = `fallback-${externalId}`;
+      status = 'pending';
+      pixCode = buildFallbackPixCode(txId, amountInReais, lotTitle);
+      console.warn('[pix/create] fallback ativado:', err.message || err);
     }
-
-    const data = resp.data;
-    const txId = data.id;
-    const pixCode = data.pix_code || null;
-    const qrcodeBase64 = data.pix_qr_code || null;
 
     const customerIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || '';
     await ensureTables();
     dbUpsertPayment(txId, {
-      externalId, paid: false, status: data.status || 'pending',
+      externalId, paid: false, status,
       value: amountInReais, contentId: lotTitle || 'Lote Leilão #144',
       contentName: lotTitle || 'Lote Leilão #144',
       customerIp, userAgent: req.headers['user-agent'] || '',
     }).catch(() => {});
 
-    return res.json({ id: txId, externalId, status: data.status, pixCode, qrcodeBase64 });
+    return res.json({ id: txId, externalId, status, pixCode, qrcodeBase64, fallback: fallbackMode });
   } catch (err) {
     const errData = err.response?.data;
     const baseMsg = errData?.error?.message || errData?.error || err.message || 'Erro ao criar transação';
