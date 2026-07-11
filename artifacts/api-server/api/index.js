@@ -122,20 +122,24 @@ app.post('/api/pix/create', async (req, res) => {
     const qrcodeBase64 = data.pix_qr_code || null;
 
     const customerIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || '';
-    await ensureTables();
-    dbUpsertPayment(txId, {
-      externalId, paid: false, status: data.status || 'pending',
-      value: amountInReais, contentId: lotTitle || 'Lote Leilão #144',
-      contentName: lotTitle || 'Lote Leilão #144',
-      customerIp, userAgent: req.headers['user-agent'] || '',
-    }).catch(() => {});
+    try {
+      await ensureTables();
+      await dbUpsertPayment(txId, {
+        externalId, paid: false, status: data.status || 'pending',
+        value: amountInReais, contentId: lotTitle || 'Lote Leilão #144',
+        contentName: lotTitle || 'Lote Leilão #144',
+        customerIp, userAgent: req.headers['user-agent'] || '',
+      });
+    } catch (dbErr) {
+      console.warn('[pix/create] persistence skipped:', dbErr?.message || dbErr);
+    }
 
     return res.json({ id: txId, externalId, status: data.status, pixCode, qrcodeBase64 });
   } catch (err) {
-    const errData = err.response?.data;
-    const baseMsg = errData?.error?.message || errData?.error || err.message || 'Erro ao criar transação';
+    const errData = err?.response?.data || err?.data;
+    const baseMsg = errData?.error?.message || errData?.error || errData?.message || err?.message || 'Erro ao criar transação';
     const detail = errData?.error?.detail ? Object.values(errData.error.detail).flat().join(', ') : null;
-    console.error('[pix/create] erro:', JSON.stringify(errData || err.message));
+    console.error('[pix/create] erro:', JSON.stringify(errData || err?.message || err));
     return res.status(500).json({ error: detail ? `${baseMsg}: ${detail}` : baseMsg });
   }
 });

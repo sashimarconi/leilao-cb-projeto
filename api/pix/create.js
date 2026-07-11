@@ -88,8 +88,12 @@ export default async function handler(req, res) {
       userAgent: req.headers['user-agent'] || '',
     };
 
-    await ensureTables();
-    dbUpsertPayment(txId, paymentData).catch(() => {});
+    try {
+      await ensureTables();
+      await dbUpsertPayment(txId, paymentData);
+    } catch (dbErr) {
+      console.warn('[pix/create] persistence skipped:', dbErr?.message || dbErr);
+    }
 
     return res.json({
       id: txId,
@@ -99,11 +103,11 @@ export default async function handler(req, res) {
       qrcodeBase64,
     });
   } catch (err) {
-    const errData = err.response && err.response.data;
-    const baseMsg = (errData?.error?.message) || (errData?.error) || err.message || 'Erro ao criar transação';
+    const errData = err?.response?.data || err?.data;
+    const baseMsg = (errData?.error?.message) || (errData?.error) || errData?.message || err?.message || 'Erro ao criar transação';
     const detail = errData?.error?.detail ? Object.values(errData.error.detail).flat().join(', ') : null;
     const msg = detail ? `${baseMsg}: ${detail}` : baseMsg;
-    console.error('[pix/create] erro:', JSON.stringify(errData || err.message));
+    console.error('[pix/create] erro:', JSON.stringify(errData || err?.message || err));
     return res.status(500).json({ error: msg });
   }
 }
